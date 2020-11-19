@@ -29,7 +29,7 @@ void *safeCalloc(int n, int size) {
   return ptr;
 }
 
-int intParse(char *arg) {
+int intParse(const char *arg) {
   char *end;
   long strParse;
 
@@ -43,7 +43,7 @@ int intParse(char *arg) {
   return (int)strParse;
 }
 
-float floatParse(char *arg) {
+float floatParse(const char *arg) {
   char *end;
   float strParse;
 
@@ -86,16 +86,6 @@ int argmax(float *a, int len) {
   return imax;
 }
 
-int epsilonGreedy(float *Q, int len, float epsilon) {
-  int action;
-  if (uniform(0, 1) > epsilon) {
-    action = (int)uniform(0, len);
-  } else {
-    action = argmax(Q, len);
-  }
-  return action;
-}
-
 float initArm(int mode) {
   if (mode == 0) {
     return stdGauss();
@@ -108,6 +98,16 @@ float rewardAction(int mode, int k, float value) {
     return value + stdGauss();
   }
   return value < uniform(0, 1) ? 1 : 0;
+}
+
+int epsilonGreedy(float *Q, int len, float epsilon) {
+  int action;
+  if (uniform(0, 1) < epsilon) {
+    action = (int)uniform(0, len);
+  } else {
+    action = argmax(Q, len);
+  }
+  return action;
 }
 
 int gibbsAction(float *p, int len) {
@@ -194,6 +194,32 @@ void updateSGD(float *H, float *pi, int len, int newAction, float Rerr,
   }
 }
 
+void printStats(float *a, float *b, int len, int count) {
+  int i;
+  float dif, xbar, sd;
+
+  xbar = 0;
+  sd = 0;
+
+  for (i = 0; i < len; i++) {
+    a[i] /= count;
+    b[i] /= count;
+    xbar += a[i];
+
+    printf("%f,%f\n", a[i], b[i]);
+  }
+
+  xbar /= len;
+  for (i = 0; i < len; i++) {
+    dif = a[i] - xbar;
+    sd += dif * dif;
+  }
+  sd /= len - 1;
+  sd = sqrtf(sd);
+
+  printf("%f,%f\n", xbar, sd);
+}
+
 void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha) {
   int k, t, n, opt;
   float R, Rbar;
@@ -231,7 +257,7 @@ void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha) {
     for (t = 0; t < T; t++) {
       switch (alg) {
       case 0:
-        epsilonGreedy(Q, K, alpha);
+        k = epsilonGreedy(Q, K, alpha);
         R = rewardAction(mode, k, value[k]);
         Q[k] += 1 / (float)(t + 1) * (R - Q[k]);
         break;
@@ -261,12 +287,7 @@ void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha) {
     }
   }
 
-  for (t = 0; t < T; t++) {
-    meanR[t] /= N;
-    optimal[t] /= N;
-
-    printf("%f, %f\n", meanR[t], optimal[t]);
-  }
+  printStats(meanR, optimal, T, N);
 
   free(value);
   free(Q);
@@ -277,17 +298,18 @@ void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha) {
 
 int main(int argc, char const *argv[]) {
   int K, T, N;
-  int t, mode, alg;
+  int mode, alg;
 
-  float alpha, R, epsilon;
-  float *meanR, *optimal;
+  float alpha;
 
   if (argc < 5) {
     printf("Provide args: <K-Arms> <Value distribution> <Algorithm> "
            "<Parameter>\n");
     printf("Value distribution: Gaussian: 0 - Bernoulli: 1\n");
-    printf("Algorithm:          Greedy Espilon: 0 - Reinforcement Comparison: 1\n");
-    printf("                    Persuit Method: 2 - Stochastic Gradient Descent: 3\n");
+    printf("Algorithm:          Greedy Espilon: 0 - Reinforcement Comparison: "
+           "1\n");
+    printf("                    Persuit Method: 2 - Stochastic Gradient "
+           "Descent: 3\n");
     printf("Parameter:          (Float) Alpha, Beta, Epsilon\n");
     exit(EXIT_FAILURE);
   }
@@ -299,8 +321,6 @@ int main(int argc, char const *argv[]) {
 
   T = 1000;
   N = 2000;
-
-  epsilon = 0.9;
 
   srand(time(NULL));
 
