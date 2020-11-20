@@ -100,7 +100,7 @@ float rewardAction(int mode, int k, float value) {
   return uniform(0, 1) < value ? 1 : 0;
 }
 
-int epsilonGreedy(float *Q, int len, float epsilon) {
+int epsGreedyAction(float *Q, int len, float epsilon) {
   int action;
   if (uniform(0, 1) < epsilon) {
     action = (int)uniform(0, len);
@@ -279,7 +279,7 @@ void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha,
     for (t = 0; t < T; t++) {
       switch (alg) {
       case 0: // Greedy Epsilon
-        k = epsilonGreedy(Q, K, alpha);
+        k = epsGreedyAction(Q, K, alpha);
         R = rewardAction(mode, k, value[k]);
         Npull[k]++;
         Q[k] += 1 / (float)Npull[k] * (R - Q[k]);

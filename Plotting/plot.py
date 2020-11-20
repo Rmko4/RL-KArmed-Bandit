@@ -4,7 +4,8 @@ import pandas as pd
 import numpy as np
 import os
 
-DATA_PATH = Path("simplevqdata.csv")
+DATA_PATH = Path("Bernoulli")
+ALGORITHMS = 
 
 
 
