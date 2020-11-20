@@ -97,7 +97,7 @@ float rewardAction(int mode, int k, float value) {
   if (mode == 0) {
     return value + stdGauss();
   }
-  return value < uniform(0, 1) ? 1 : 0;
+  return uniform(0, 1) < value ? 1 : 0;
 }
 
 int epsilonGreedy(float *Q, int len, float epsilon) {
@@ -194,42 +194,62 @@ void updateSGD(float *H, float *pi, int len, int newAction, float Rerr,
   }
 }
 
-void printStats(float *a, float *b, int len, int count) {
+void printArgReq() {
+  printf("Provide args: <K-Arms> <Value distribution> <Algorithm> "
+           "[Param 1] [Param 2]\n");
+    printf("Value distribution: Gaussian: 0 - Bernoulli: 1\n");
+    printf("Algorithm:          Greedy Espilon: 0 - Reinforcement Comparison: "
+           "1\n");
+    printf("                    Pursuit Method: 2 - Stochastic Gradient "
+           "Descent: 3\n");
+    printf("Params (2 Max):     (Float) Alpha, Beta, Epsilon\n");
+}
+
+void printStats(float *meanR, float *optimal, float *sumR, int T, int N) {
   int i;
   float dif, xbar, sd;
 
   xbar = 0;
   sd = 0;
 
-  for (i = 0; i < len; i++) {
-    a[i] /= count;
-    b[i] /= count;
-    xbar += a[i];
+  for (i = 0; i < T; i++) {
+    meanR[i] /= N;
+    optimal[i] /= N;
 
-    printf("%f,%f\n", a[i], b[i]);
+    printf("%f,%f\n", meanR[i], optimal[i]);
   }
 
-  xbar /= len;
-  for (i = 0; i < len; i++) {
-    dif = a[i] - xbar;
+  for (i = 0; i < N; i++) {
+    xbar += sumR[i];
+  }
+
+  xbar /= N;
+
+  for (i = 0; i < N; i++) {
+    dif = sumR[i] - xbar;
     sd += dif * dif;
   }
-  sd /= len - 1;
-  sd = sqrtf(sd);
+
+  sd = sqrtf(sd / (N - 1));
 
   printf("%f,%f\n", xbar, sd);
 }
 
-void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha) {
+void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha,
+                  float beta) {
   int k, t, n, opt;
   float R, Rbar;
 
-  float *value, *Q, *p, *meanR, *optimal;
+  int *Npull;
+  float *value, *Q, *p;
+  float *sumR, *meanR, *optimal;
 
   value = safeMalloc(K * sizeof(float));
   Q = safeMalloc(K * sizeof(float));
   p = safeMalloc(K * sizeof(float));
+  Npull = safeMalloc(K * sizeof(int));
 
+  sumR = safeCalloc(N, sizeof(float));
   meanR = safeCalloc(T, sizeof(float));
   optimal = safeCalloc(T, sizeof(float));
 
@@ -239,10 +259,12 @@ void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha) {
       switch (alg) {
       case 0:
         Q[k] = 0;
+        Npull[k] = 0;
         break;
       case 1:
         p[k] = 1 / (float)K;
       case 2:
+        Npull[k] = 0;
       case 3:
         Q[k] = 0;
         p[k] = 1 / (float)K;
@@ -256,24 +278,26 @@ void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha) {
 
     for (t = 0; t < T; t++) {
       switch (alg) {
-      case 0:
+      case 0: // Greedy Epsilon
         k = epsilonGreedy(Q, K, alpha);
         R = rewardAction(mode, k, value[k]);
-        Q[k] += 1 / (float)(t + 1) * (R - Q[k]);
+        Npull[k]++;
+        Q[k] += 1 / (float)Npull[k] * (R - Q[k]);
         break;
-      case 1:
+      case 1: // Reinforcement Comparison
         k = gibbsAction(p, K);
         R = rewardAction(mode, k, value[k]);
-        Rbar += 1 / (float)(t + 1) * (R - Rbar);
-        p[k] += (R - Rbar);
+        Rbar += alpha * (R - Rbar);
+        p[k] += beta * (R - Rbar);
         break;
-      case 2:
+      case 2: // Pursuit Methods
         k = uniformAction(p, K);
         R = rewardAction(mode, k, value[k]);
-        Q[k] += 1 / (float)(t + 1) * (R - Q[k]);
+        Npull[k]++;
+        Q[k] += 1 / (float)Npull[k] * (R - Q[k]);
         updateGreedy(p, Q, K, alpha);
         break;
-      case 3:
+      case 3: // Stochastic Gradient Descent
         k = uniformAction(p, K);
         R = rewardAction(mode, k, value[k]);
         Rbar += 1 / (float)(t + 1) * (R - Rbar);
@@ -282,12 +306,13 @@ void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha) {
         break;
       }
 
+      sumR[n] += R;
       meanR[t] += R;
       optimal[t] += k == opt ? 1 : 0;
     }
   }
 
-  printStats(meanR, optimal, T, N);
+  printStats(meanR, optimal, sumR, T, N);
 
   free(value);
   free(Q);
@@ -300,31 +325,25 @@ int main(int argc, char const *argv[]) {
   int K, T, N;
   int mode, alg;
 
-  float alpha;
+  float alpha, beta;
 
-  if (argc < 5) {
-    printf("Provide args: <K-Arms> <Value distribution> <Algorithm> "
-           "<Parameter>\n");
-    printf("Value distribution: Gaussian: 0 - Bernoulli: 1\n");
-    printf("Algorithm:          Greedy Espilon: 0 - Reinforcement Comparison: "
-           "1\n");
-    printf("                    Persuit Method: 2 - Stochastic Gradient "
-           "Descent: 3\n");
-    printf("Parameter:          (Float) Alpha, Beta, Epsilon\n");
+  if (argc < 4) {
+    printArgReq();
     exit(EXIT_FAILURE);
   }
 
   K = intParse(argv[1]);
   mode = intParse(argv[2]);
   alg = intParse(argv[3]);
-  alpha = floatParse(argv[4]);
+  alpha = argc > 4 ? floatParse(argv[4]) : 0.05;
+  beta = argc > 5 ? floatParse(argv[5]) : 0.1;
 
   T = 1000;
   N = 2000;
 
   srand(time(NULL));
 
-  kArmedBandit(K, T, N, mode, alg, alpha);
+  kArmedBandit(K, T, N, mode, alg, alpha, beta);
 
   return 0;
 }
