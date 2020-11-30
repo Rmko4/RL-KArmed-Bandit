@@ -198,7 +198,7 @@ void printArgReq() {
   printf("Provide args: <K-Arms> <Value distribution> <Algorithm> "
            "[Param 1] [Param 2]\n");
     printf("Value distribution: Gaussian: 0 - Bernoulli: 1\n");
-    printf("Algorithm:          Greedy Espilon: 0 - Reinforcement Comparison: "
+    printf("Algorithm:          Espilon Greedy: 0 - Reinforcement Comparison: "
            "1\n");
     printf("                    Pursuit Method: 2 - Stochastic Gradient "
            "Descent: 3\n");
@@ -339,7 +339,7 @@ int main(int argc, char const *argv[]) {
   beta = argc > 5 ? floatParse(argv[5]) : 0.1;
 
   T = 1000;
-  N = 2000;
+  N = 5000;
 
   srand(time(NULL));
 

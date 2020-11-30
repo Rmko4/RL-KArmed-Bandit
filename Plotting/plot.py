@@ -4,72 +4,58 @@ import pandas as pd
 import numpy as np
 import os
 
-DATA_PATH = Path("Bernoulli")
-ALGORITHMS = 
+DATA_BERNOULLI = Path("Bernoulli")
+DATA_GAUSSIAN = Path("Gaussian")
+ALGORITHMS = ["Epsilon Greedy", "Pursuit Method",
+              "Reinforcement Comparison", "Stochastic Gradient Descent"]
 
 
-
-def plot_multi_n_prototypes(errors):
-
-    plt.plot(N_PROTOTYPES, errors)
-
-    plt.xlabel("K")
-    plt.ylabel("Quantization error")
-    plt.title("Quantization errors for different Ks")
-    plt.show()
+def open_data(data_path):
+    data = []
+    for file in os.listdir(data_path):
+        if file.endswith(".csv"):
+            df = pd.read_csv(data_path / file, header=None)
+            data.append(df.values[:-1].transpose())
+    return data
 
 
-def show_prototypes_and_data(data, prototypes):
-    data = data.transpose()
-    prototypes = np.array(prototypes).transpose()
-    plt.scatter(data[0], data[1], label="data points")
-    plt.scatter(prototypes[0], prototypes[1], label="prototypes")
-
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.title("Data and prototypes")
+def plot_reward(data, title):
+    plt.figure(figsize=(9, 5))
+    for i in range(len(data)):
+        plt.plot(data[i][0], label=ALGORITHMS[i])
+    plt.xlabel("Steps")
+    plt.ylabel("Average Reward")
+    plt.title(title)
     plt.legend()
     plt.show()
 
 
-def plot_prototype_trajectories(all_prototypes, data, n_prototypes):
-
-    data = data.transpose()
-
-    # Plot data points as blue dots
-    plt.scatter(data[0], data[1], label="data points")
-
-    # Plot trajectories
-    for j in range(n_prototypes):
-        x_values = [prototypes[j][0] for prototypes in all_prototypes]
-        y_values = [prototypes[j][1] for prototypes in all_prototypes]
-        plt.plot(x_values, y_values, color='orange', linewidth=2)
-
-    # To instantiate single label for protoype trajectories
-    plt.plot(all_prototypes[0][0][0], all_prototypes[0][0]
-             [0], color="orange", label="prototype trajectories")
-
-    # Plot final prototypes as red dots
-    final_prototypes = all_prototypes[-1]
-    final_prototypes = np.array(final_prototypes).transpose()
-    plt.scatter(final_prototypes[0], final_prototypes[1],
-                label="final prototypes", color='r')
-
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.title("Data and prototypes trajectories")
+def plot_optimality(data, title):
+    for i in range(len(data)):
+        plt.plot(100 * data[i][1], label=ALGORITHMS[i])
+    plt.xlabel("Steps")
+    plt.ylabel("% Optimal action")
+    plt.yticks(np.linspace(0, 100, 6))
+    plt.title(title)
     plt.legend()
     plt.show()
-
 
 
 def main():
-    data_path = os.path.dirname(os.path.abspath(__file__)) / DATA_PATH
+    data_path = Path(os.path.dirname(os.path.abspath(__file__))).parent
 
-    df = pd.read_csv(data_path, header=None)
-    data = df.values
+    gaussian = open_data(data_path / DATA_GAUSSIAN)
+    bernoulli = open_data(data_path / DATA_BERNOULLI)
 
-    result = []
+    plot_reward(
+        gaussian, title="Average reward in Gaussian 10-armed bandit problem")
+    plot_reward(
+        bernoulli, title="Average reward in Bernoulli 10-armed bandit problem")
+
+    plot_optimality(
+        gaussian, title="Percentage of optimal actions in Gaussian 10-armed bandit problem")
+    plot_optimality(
+        bernoulli, title="Percentage of optimal actions in Bernoulli 10-armed bandit problem")
 
 
 if __name__ == "__main__":
