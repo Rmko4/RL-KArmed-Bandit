@@ -20,24 +20,25 @@ def open_data(data_path):
 
 
 def plot_reward(data, title):
-    plt.figure(figsize=(9, 5))
+    plt.figure(figsize=(8, 5))
     for i in range(len(data)):
         plt.plot(data[i][0], label=ALGORITHMS[i])
-    plt.xlabel("Steps")
-    plt.ylabel("Average Reward")
-    plt.title(title)
-    plt.legend()
+    plt.xlabel("Steps", fontsize=12)
+    plt.ylabel("Average Reward", fontsize=12)
+    plt.title(title, fontsize=14)
+    plt.legend(fontsize=12)
     plt.show()
 
 
 def plot_optimality(data, title):
+    plt.figure(figsize=(8, 5))
     for i in range(len(data)):
         plt.plot(100 * data[i][1], label=ALGORITHMS[i])
-    plt.xlabel("Steps")
-    plt.ylabel("% Optimal action")
+    plt.xlabel("Steps", fontsize=12)
+    plt.ylabel("% Optimal action", fontsize=12)
     plt.yticks(np.linspace(0, 100, 6))
-    plt.title(title)
-    plt.legend()
+    plt.title(title, fontsize=14)
+    plt.legend(fontsize=12)
     plt.show()
 
 
