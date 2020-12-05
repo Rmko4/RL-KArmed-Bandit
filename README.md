@@ -11,7 +11,7 @@ A more detailed description of how to run the program with these parameters is d
 
 ## Compile the code (gcc)
 The code can be compiled through:  
-`gcc bandit.c -o bandit -O3 -lm`
+`gcc bandit.c safeAlloc.c -o bandit -O3 -lm`
 
 ## Run the program
 The program can be run through:  
