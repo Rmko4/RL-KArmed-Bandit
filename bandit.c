@@ -1,67 +1,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <errno.h>  // errno
+#include "safeAlloc.h"
 #include <float.h>  // FLT_MIN
-#include <limits.h> // INT_MAX
 #include <math.h>   // sqrtf
 #include <time.h>   // time
+
+#define VAL_T 1000
+#define VAL_N 5000
 
 #ifndef M_PI
 #define M_PI 3.1415926535897932
 #endif
 
-void *safeMalloc(int n) {
-  void *ptr = malloc(n);
-  if (ptr == NULL) {
-    perror("Allocation failed.\n");
-    exit(EXIT_FAILURE);
-  }
-  return ptr;
-}
-
-void *safeCalloc(int n, int size) {
-  void *ptr = calloc(n, size);
-  if (ptr == NULL) {
-    perror("Allocation failed.\n");
-    exit(EXIT_FAILURE);
-  }
-  return ptr;
-}
-
-int intParse(const char *arg) {
-  char *end;
-  long strParse;
-
-  strParse = strtol(arg, &end, 10);
-  errno = 0;
-
-  if (errno != 0 || *end != '\0' || strParse > INT_MAX) {
-    perror("Error while converting arg.\n");
-    exit(EXIT_FAILURE);
-  }
-  return (int)strParse;
-}
-
-float floatParse(const char *arg) {
-  char *end;
-  float strParse;
-
-  strParse = strtof(arg, &end);
-  errno = 0;
-
-  if (errno != 0 || *end != '\0') {
-    perror("Error while converting arg.\n");
-    exit(EXIT_FAILURE);
-  }
-  return strParse;
-}
-
+// Samples from a uniform distribution between min and max.
 float uniform(float min, float max) {
   float div = RAND_MAX / (max - min);
   return min + rand() / div;
 }
 
+// Samples from the standard Gaussian distribution.
 float stdGauss() {
   float u1, u2, z;
 
@@ -86,6 +44,7 @@ int argmax(float *a, int len) {
   return imax;
 }
 
+// Samples arm value based on mode.
 float initArm(int mode) {
   if (mode == 0) {
     return stdGauss();
@@ -93,13 +52,15 @@ float initArm(int mode) {
   return uniform(0, 1);
 }
 
-float rewardAction(int mode, int k, float value) {
+// Samples a reward based on the mode and arm value
+float rewardAction(int mode, float value) {
   if (mode == 0) {
     return value + stdGauss();
   }
   return uniform(0, 1) < value ? 1 : 0;
 }
 
+// Returns action based on Epsilon.
 int epsGreedyAction(float *Q, int len, float epsilon) {
   int action;
   if (uniform(0, 1) < epsilon) {
@@ -280,26 +241,26 @@ void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha,
       switch (alg) {
       case 0: // Greedy Epsilon
         k = epsGreedyAction(Q, K, alpha);
-        R = rewardAction(mode, k, value[k]);
+        R = rewardAction(mode, value[k]);
         Npull[k]++;
         Q[k] += 1 / (float)Npull[k] * (R - Q[k]);
         break;
       case 1: // Reinforcement Comparison
         k = gibbsAction(p, K);
-        R = rewardAction(mode, k, value[k]);
+        R = rewardAction(mode, value[k]);
         Rbar += alpha * (R - Rbar);
         p[k] += beta * (R - Rbar);
         break;
       case 2: // Pursuit Methods
         k = uniformAction(p, K);
-        R = rewardAction(mode, k, value[k]);
+        R = rewardAction(mode, value[k]);
         Npull[k]++;
         Q[k] += 1 / (float)Npull[k] * (R - Q[k]);
         updateGreedy(p, Q, K, alpha);
         break;
       case 3: // Stochastic Gradient Descent
         k = uniformAction(p, K);
-        R = rewardAction(mode, k, value[k]);
+        R = rewardAction(mode, value[k]);
         Rbar += 1 / (float)(t + 1) * (R - Rbar);
         updateSGD(p, Q, K, k, R - Rbar, alpha);
       default:
@@ -338,8 +299,8 @@ int main(int argc, char const *argv[]) {
   alpha = argc > 4 ? floatParse(argv[4]) : 0.05;
   beta = argc > 5 ? floatParse(argv[5]) : 0.1;
 
-  T = 1000;
-  N = 5000;
+  T = VAL_T;
+  N = VAL_N;
 
   srand(time(NULL));
 
