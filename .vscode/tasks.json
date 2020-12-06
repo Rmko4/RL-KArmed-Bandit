@@ -8,6 +8,7 @@
                 "-std=c99",
                 "-g",
                 "${file}",
+                "safeAlloc.c",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-lm"

@@ -7,7 +7,7 @@ import os
 DATA_BERNOULLI = Path("Bernoulli")
 DATA_GAUSSIAN = Path("Gaussian")
 ALGORITHMS = ["Epsilon Greedy", "Pursuit Method",
-              "Reinforcement Comparison", "Stochastic Gradient Descent"]
+              "Reinforcement Comparison", "Stochastic Gradient Ascent"]
 
 
 def open_data(data_path):
