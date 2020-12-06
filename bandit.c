@@ -7,7 +7,7 @@
 #include <time.h>  // time
 
 #define VAL_T 1000
-#define VAL_N 10000
+#define VAL_N 250000
 
 #ifndef M_PI
 #define M_PI 3.1415926535897932
@@ -68,14 +68,14 @@ int epsGreedyAction(float *Q, int len, float epsilon) {
   } else {
     action = argmax(Q, len);
   }
-  action = action == len ? len - 1 : action;
 
+  action = action == len ? len - 1 : action;
   return action;
 }
 
 // Samples from an array of preferences.
 // The sum of preferences needs to be given.
-int samplePref(float *p, float sum) {
+int samplePref(float *p, int len, float sum) {
   int action;
   float x, run;
 
@@ -83,7 +83,7 @@ int samplePref(float *p, float sum) {
   run = 0;
   action = 0;
 
-  while (x > run) {
+  while (x > run && action < len) {
     run += p[action];
     action++;
   }
@@ -107,8 +107,7 @@ int gibbsAction(float *p, float *pi, int len) {
     pi[action] /= sum;
   }
 
-  action = samplePref(pi, 1);
-
+  action = samplePref(pi, len, 1);
   return action;
 }
 
@@ -122,7 +121,8 @@ int linearAction(float *p, int len) {
     sum += p[action];
   }
 
-  action = samplePref(p, sum);
+  action = samplePref(p, len, sum);
+
   return action;
 }
 
