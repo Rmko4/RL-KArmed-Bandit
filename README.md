@@ -15,7 +15,7 @@ The code can be compiled through:
 
 ## Run the program
 The program can be run through:  
-`./bandit <K-Arms> <Value distribution> <Algorithm> [Param 1] [Param 2]`
+`./bandit <K-Arms> <Value distribution> <Algorithm> [Param 1]`
 
 The arguments need to be specified following the rules:
 
@@ -31,8 +31,8 @@ The arguments need to be specified following the rules:
 * _Pursuit Method_: 2
 * _Stochastic Gradient Ascent_: 3
 
-**Param 1/2:** Optional; A maximum of two parameters. In order: Alpha, Beta, Epsilon, dependent on the parameters that are required by the algorithm. Param 1 is by default 0.05 and Param 2 is 0.1. Otherwise, select any float > 0.
+**Param 1:** Optional. Param 1 is by default 0.05. Otherwise, select any float > 0.
 * _Epsilon Greedy_: Param 1 = Epsilon
-* _Reinforcement Comparison_: Param 1 = Alpha; Param 2 = Beta
+* _Reinforcement Comparison_: Param 1 = Beta
 * _Pursuit Method_: Param 1 = Beta
 * _Stochastic Gradient Ascent_: Param 1 = Alpha

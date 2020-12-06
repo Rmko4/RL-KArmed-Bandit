@@ -68,6 +68,8 @@ int epsGreedyAction(float *Q, int len, float epsilon) {
   } else {
     action = argmax(Q, len);
   }
+  action = action == len ? len - 1 : action;
+
   return action;
 }
 
@@ -187,22 +189,21 @@ void printStats(float *meanR, float *optimal, float *sumR, int T, int N) {
 
 void printArgReq() {
   printf("Provide args: <K-Arms> <Value distribution> <Algorithm> "
-         "[Param 1] [Param 2]\n");
+         "[Param 1]\n");
   printf("K-Arms: (int) > 0 \n");
   printf("Value distribution: Gaussian: 0 - Bernoulli: 1\n");
   printf("Algorithm:          Espilon Greedy: 0 - Reinforcement Comparison: "
          "1\n");
   printf("                    Pursuit Method: 2 - Stochastic Gradient "
          "Ascent: 3\n");
-  printf("Params (2 Max):     (Float) Alpha, Beta, Epsilon\n");
+  printf("Param 1:            (Float) Alpha, Beta, Epsilon\n");
 }
 
-void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha,
-                  float beta) {
+void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha) {
   int k, t, n, opt;
   float R, Rbar;
 
-  int *Npull; // Number of times an action has been chosen: N_t(a)
+  int *Npull;   // Number of times an action has been chosen: N_t(a)
   float *value; // Value of action: q(a)
   float *Q, *p; // Value estimate of action and preference of action
   float *sumR, *meanR, *optimal;
@@ -220,7 +221,7 @@ void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha,
     for (k = 0; k < K; k++) {
       value[k] = initArm(mode);
       switch (alg) {
-      case 0: 
+      case 0:
         Q[k] = 0;
         Npull[k] = 0;
         break;
@@ -249,8 +250,8 @@ void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha,
       case 1: // Reinforcement Comparison
         k = gibbsAction(p, Q, K);
         R = rewardAction(mode, value[k]);
-        Rbar += alpha * (R - Rbar);
-        p[k] += beta * (R - Rbar);
+        Rbar += 1 / (float)(t + 1) * (R - Rbar);
+        p[k] += alpha * (R - Rbar);
         break;
       case 2: // Pursuit Methods
         k = linearAction(p, K);
@@ -276,18 +277,21 @@ void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha,
 
   printStats(meanR, optimal, sumR, T, N);
 
+  free(sumR);
+  free(meanR);
+  free(optimal);
+
   free(value);
   free(Q);
   free(p);
-  free(meanR);
-  free(optimal);
+  free(Npull);
 }
 
 int main(int argc, char const *argv[]) {
   int K, T, N;
   int mode, alg;
 
-  float alpha, beta;
+  float alpha;
 
   if (argc < 4) {
     printArgReq();
@@ -299,14 +303,13 @@ int main(int argc, char const *argv[]) {
   mode = intParse(argv[2]);
   alg = intParse(argv[3]);
   alpha = argc > 4 ? floatParse(argv[4]) : 0.05;
-  beta = argc > 5 ? floatParse(argv[5]) : 0.1;
 
   T = VAL_T;
   N = VAL_N;
 
   srand(time(NULL));
 
-  kArmedBandit(K, T, N, mode, alg, alpha, beta);
+  kArmedBandit(K, T, N, mode, alg, alpha);
 
   return 0;
 }
