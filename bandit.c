@@ -7,7 +7,7 @@
 #include <time.h>  // time
 
 #define VAL_T 1000
-#define VAL_N 250000
+#define VAL_N 20000
 
 #ifndef M_PI
 #define M_PI 3.1415926535897932
