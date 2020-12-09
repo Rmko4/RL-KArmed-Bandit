@@ -6,8 +6,9 @@
 #include <math.h>  // sqrtf
 #include <time.h>  // time
 
-#define VAL_T 1000
 #define VAL_N 20000
+#define VAL_K 10
+#define VAL_T 1000
 
 #ifndef M_PI
 #define M_PI 3.1415926535897932
@@ -188,15 +189,17 @@ void printStats(float *meanR, float *optimal, float *sumR, int T, int N) {
 }
 
 void printArgReq() {
-  printf("Provide args: <K-Arms> <Value distribution> <Algorithm> "
-         "[Param 1]\n");
-  printf("K-Arms: (int) > 0 \n");
+  printf("Provide args: <Value distribution> <Algorithm> <Param 1> [N-runs] "
+         "[K-arms] [T-steps]\n");
   printf("Value distribution: Gaussian: 0 - Bernoulli: 1\n");
   printf("Algorithm:          Espilon Greedy: 0 - Reinforcement Comparison: "
          "1\n");
   printf("                    Pursuit Method: 2 - Stochastic Gradient "
          "Ascent: 3\n");
   printf("Param 1:            (Float) Alpha, Beta, Epsilon\n");
+  printf("N-runs (optional):  (int) > 0 - Default: 20000\n");
+  printf("K-arms (optional):  (int) > 0 - Default: 10\n");
+  printf("T-steps (optional): (int) > 0 - Default: 1000\n");
 }
 
 void kArmedBandit(int K, int T, int N, int mode, int alg, float alpha) {
@@ -299,13 +302,13 @@ int main(int argc, char const *argv[]) {
   }
 
   // Parsing args
-  K = intParse(argv[1]);
-  mode = intParse(argv[2]);
-  alg = intParse(argv[3]);
-  alpha = argc > 4 ? floatParse(argv[4]) : 0.05;
+  mode = intParse(argv[1]);
+  alg = intParse(argv[2]);
+  alpha = floatParse(argv[3]);
 
-  T = VAL_T;
-  N = VAL_N;
+  N = argc > 4 ? intParse(argv[4]) : VAL_N;
+  K = argc > 5 ? intParse(argv[5]) : VAL_K;
+  T = argc > 6 ? intParse(argv[6]) : VAL_T;
 
   srand(time(NULL));
 
