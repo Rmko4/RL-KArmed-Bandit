@@ -6,13 +6,14 @@
 #include <math.h>  // sqrtf
 #include <time.h>  // time
 
+#ifndef M_PI
+#define M_PI 3.1415926535897932
+#endif
+
 #define VAL_N 20000
 #define VAL_K 10
 #define VAL_T 1000
 
-#ifndef M_PI
-#define M_PI 3.1415926535897932
-#endif
 
 int argmax(float *a, int len) {
   int i, imax;
